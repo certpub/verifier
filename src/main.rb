@@ -2,7 +2,13 @@ require 'config'
 require 'rainbow'
 require 'slop'
 
+
+# LOAD APPLICATION
+
 Dir[File.join(__dir__, 'lib', '*.rb')].sort.each { |file| require file }
+
+
+# CLI PARSER
 
 opts = Slop.parse do |o|
   o.string '-m', '--mode', 'mode', default: 'production'
@@ -15,10 +21,16 @@ opts = Slop.parse do |o|
   o.bool '-h', '--help', 'Display help'
 end
 
+
+# CLI HELP
+
 if opts[:help]
   puts opts
   exit
 end
+
+
+# CONFIG
 
 Config.load_and_set_settings(Config.setting_files(File.join(__dir__, 'config'), opts[:mode]))
 
