@@ -4,29 +4,62 @@ module CertPub
 
   module Spec
 
-    module PublisherV1Signing
+    class PublisherV1Signing
 
       def self.perform(address, participant)
-        client = CertPub::Util::RestClient address
+        instance = self::new address, participant
+        instance.listing_current
+      end
 
-        path = "api/v1/sig/#{participant.escaped}"
+      def initialize(address, participant)
+        @client = CertPub::Util::RestClient address
+        @participant = participant
+      end
 
-        puts "Address: #{client.base_url}"
+      def listing_current
+        path = "api/v1/sig/#{@participant.escaped}"
+
+        puts "Address: #{@client.base_url}"
         puts "Path: #{path}"
 
-        resp = client.get(path)
+        resp = @client.get(path)
 
         if resp.status == 200
           puts "Status: #{Rainbow(resp.status).green.bright}"
-          puts "Response:"
 
           xml = Nokogiri::XML(resp.body)
+          puts "Process references: #{Rainbow(xml.css("Participant ProcessReference").count).cyan}"
+          puts
+
           xml.css("Participant ProcessReference").sort_by(&:text).each do |e|
-            puts Rainbow("  #{e.xpath('@qualifier')}::").cyan + Rainbow(e.text).cyan.bright + Rainbow(" @ #{e.xpath('@role')}").cyan
+            process = CertPub::Model::Process::new e.text, e.xpath('@qualifier')
+            role = e.xpath('@role')
+            
+            single_current process, role
+            puts
           end
         else
           puts "Status: #{Rainbow(resp.status).red.bright}"
           puts "Response: #{Rainbow(resp.body).red}"
+        end
+      end
+
+      def single_current(process, role)
+        puts Rainbow("  Process: #{process.scheme}::").blue + Rainbow(process.value).blue.bright + Rainbow(" @ #{role}").blue
+        path = "api/v1/sig/#{@participant.escaped}/#{process.escaped}/#{role}"
+
+        puts "  Address: #{@client.base_url}"
+        puts "  Path: #{path}"
+
+        resp = @client.get(path)
+        
+        if resp.status == 200
+          puts "  Status: #{Rainbow(resp.status).green.bright}"
+        
+          xml = Nokogiri::XML(resp.body)
+        else
+          puts "  Status: #{Rainbow(resp.status).red.bright}"
+          puts "  Response: #{Rainbow(resp.body).red}"
         end
       end
 
