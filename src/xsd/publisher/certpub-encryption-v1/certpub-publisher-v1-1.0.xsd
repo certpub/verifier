@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2017 Norwegian Agency for Public Management and eGovernment (Difi)
+  ~
+  ~ Licensed under the EUPL, Version 1.1 or – as soon they
+  ~ will be approved by the European Commission - subsequent
+  ~ versions of the EUPL (the "Licence");
+  ~
+  ~ You may not use this work except in compliance with the Licence.
+  ~
+  ~ You may obtain a copy of the Licence at:
+  ~
+  ~ https://joinup.ec.europa.eu/community/eupl/og_page/eupl
+  ~
+  ~ Unless required by applicable law or agreed to in
+  ~ writing, software distributed under the Licence is
+  ~ distributed on an "AS IS" basis,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+  ~ express or implied.
+  ~ See the Licence for the specific language governing
+  ~ permissions and limitations under the Licence.
+  -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xmldsig="http://www.w3.org/2000/09/xmldsig#"
+           xmlns="urn:fdc:difi.no:2017:virksert:v1"
+           targetNamespace="urn:fdc:difi.no:2017:virksert:v1"
+           elementFormDefault="qualified">
+
+    <xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="xmldsig-core-schema.xsd"/>
+
+    <xs:element name="Participant" type="ParticipantType"/>
+    <xs:complexType name="ParticipantType">
+        <xs:sequence>
+            <xs:element name="ParticipantIdentifier" type="IdentifierType"/>
+            <xs:element name="ProcessReference" type="IdentifierType" maxOccurs="unbounded"/>
+            <xs:element ref="xmldsig:Signature" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="Process" type="ProcessType"/>
+    <xs:complexType name="ProcessType">
+        <xs:sequence>
+            <xs:element name="ParticipantIdentifier" type="IdentifierType"/>
+            <xs:element name="ProcessIdentifier" type="IdentifierType"/>
+            <xs:element name="Certificate" type="CertificateType" maxOccurs="unbounded"/>
+            <xs:element ref="xmldsig:Signature" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="IdentifierType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="scheme" type="xs:string" use="required"/>
+                <xs:attribute name="role" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="CertificateType">
+        <xs:simpleContent>
+            <xs:extension base="xs:base64Binary">
+                <xs:attribute name="serialNumber" type="xs:string" use="required"/>
+                <xs:attribute name="expire" type="xs:long" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+</xs:schema>

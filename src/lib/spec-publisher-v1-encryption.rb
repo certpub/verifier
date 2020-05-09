@@ -15,8 +15,10 @@ module CertPub
 
       def initialize(context, address, participant)
         @context = context
-        @client = CertPub::Util::RestClient address
+        @client = CertPub::Util::RestClient context, address
         @participant = participant
+
+        @xsd = xsd = Nokogiri::XML::Schema(File.open(File.join(context.home_folder, 'xsd/publisher/certpub-encryption-v1/certpub-publisher-v1-1.0.xsd')))
       end
 
       def listing
@@ -31,6 +33,13 @@ module CertPub
 
         if resp.status == 200
           xml = Nokogiri::XML(resp.body)
+
+          validation = @xsd.validate(xml)
+          puts "Document validation #{verify(validation.count == 0)}"
+          validation.each do |error|
+            puts "- #{Rainbow(error.message).red}"
+          end
+
           puts "Process references: #{Rainbow(xml.css("Participant ProcessReference").count).cyan}"
           puts
 
@@ -59,6 +68,12 @@ module CertPub
 
         if resp.status == 200
           xml = Nokogiri::XML(resp.body)
+
+          validation = @xsd.validate(xml)
+          puts "  Document validation #{verify(validation.count == 0)}"
+          validation.each do |error|
+            puts "  - #{Rainbow(error.message).red}"
+          end
 
           xml_participant = xml.css('Process ParticipantIdentifier')
           res_participant = CertPub::Model::Participant::new xml_participant.text(), xml_participant.xpath('@scheme')

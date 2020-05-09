@@ -3,11 +3,6 @@ require 'rainbow'
 require 'slop'
 
 
-# LOAD APPLICATION
-
-Dir[File.join(__dir__, 'lib', '*.rb')].sort.each { |file| require file }
-
-
 # CLI PARSER
 
 opts = Slop.parse do |o|
@@ -18,6 +13,7 @@ opts = Slop.parse do |o|
   o.string '--locator-spec', 'locator specification', default: 'certpub-v1'
   o.string '--publisher', 'publisher address'
   o.string '--publisher-spec', 'publisher specification'
+  o.string '--user-agent', 'user agent', default: 'CertPub/Verifier'
   o.bool '-h', '--help', 'Display help'
 end
 
@@ -33,6 +29,11 @@ end
 # CONFIG
 
 Config.load_and_set_settings(Config.setting_files(File.join(__dir__, 'config'), opts[:mode]))
+
+
+# LOAD APPLICATION
+
+Dir[File.join(__dir__, 'lib', '*.rb')].sort.each { |file| require file }
 
 
 # PARTICIPANT
@@ -51,10 +52,14 @@ puts "Full: #{participant} #{participant.valid? ? Rainbow("[OK]").green : Rainbo
 puts
 
 
+# TODO: CERTIFICATES
+
+
 # CONTEXT
 
 context = CertPub::Model::Context::new
 context.opts = opts
+context.home_folder = __dir__
 
 
 # LOCATOR
