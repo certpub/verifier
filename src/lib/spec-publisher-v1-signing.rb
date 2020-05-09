@@ -7,12 +7,13 @@ module CertPub
 
     class PublisherV1Signing
 
-      def self.perform(address, participant)
-        instance = self::new address, participant
+      def self.perform(context, address, participant)
+        instance = self::new context, address, participant
         instance.listing_current
       end
 
-      def initialize(address, participant)
+      def initialize(context, address, participant)
+        @context = context
         @client = CertPub::Util::RestClient address
         @participant = participant
       end
@@ -99,9 +100,9 @@ module CertPub
                 pp to
                 time_to = DateTime.parse(to.to_s)
 
-                puts "      #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => #{Rainbow(to).cyan} #{verify(time_to <= certificate.not_after)}"
+                puts "    - #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => #{Rainbow(to).cyan} #{verify(time_to <= certificate.not_after)}"
               else
-                puts "      #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => Future"
+                puts "    - #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => Future"
               end
             end
           end

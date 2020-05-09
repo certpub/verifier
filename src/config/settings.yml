@@ -6,12 +6,12 @@ spec:
 
   publisher:
     - id: certpub-encryption-v1
-      name: CertPub Publisher v1, encryption
       key: difi-bcp-v1
+      name: CertPub Publisher v1, encryption
       impl: CertPub::Spec::PublisherV1Encryption
 
     - id: certpub-signing-v1
-      name: CertPub Publisher v1, signing
       key: difi-bcp-v1
+      name: CertPub Publisher v1, signing
       impl: CertPub::Spec::PublisherV1Signing
   

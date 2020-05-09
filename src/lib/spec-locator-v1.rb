@@ -7,7 +7,7 @@ module CertPub
 
     module LocatorV1
 
-      def self.perform(address, participant)
+      def self.perform(context, address, participant)
         client = CertPub::Util::RestClient address
         path = "lookup/v2/#{participant.escaped}"
 

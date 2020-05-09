@@ -24,6 +24,7 @@ Config.load_and_set_settings(Config.setting_files(File.join(__dir__, 'config'), 
 
 
 # PARTICIPANT
+
 if opts[:participant] == nil
   puts Rainbow("Participant identifier is not provided").red
   exit 1
@@ -34,8 +35,14 @@ participant = CertPub::Model::Participant::new opts[:participant], opts[:scheme]
 puts Rainbow('Participant').blue.bright
 puts "Identifier: #{participant.value}"
 puts "Scheme: #{participant.scheme}"
-puts "Full: #{participant}"
+puts "Full: #{participant} #{participant.valid? ? Rainbow("[OK]").green : Rainbow("[ERR]").red}"
 puts
+
+
+# CONTEXT
+
+context = CertPub::Model::Context::new
+context.opts = opts
 
 
 # LOCATOR
@@ -51,7 +58,7 @@ if opts[:publisher] == nil
   if spec
     # Perform discovery
     puts Rainbow("Locator: #{spec.name}").blue.bright
-    locator_response = CertPub::Util::impl(spec.impl).send('perform', locator_address, participant)
+    locator_response = CertPub::Util::impl(spec.impl).send('perform', context, locator_address, participant)
     puts
   else
     # Implementation of specified specification was not found
@@ -72,7 +79,7 @@ if locator_response
   locator_response.each do |key, address|
     Settings.spec.publisher.filter { |spec| spec.key == key }.each do |spec|
       puts Rainbow("Publisher: #{spec.name}").blue.bright
-      CertPub::Util::impl(spec.impl).send('perform', address, participant)
+      CertPub::Util::impl(spec.impl).send('perform', context, address, participant)
       puts
     end
   end

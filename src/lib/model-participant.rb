@@ -25,6 +25,14 @@ module CertPub
         o.class == self.class && o.to_s == to_s
       end
 
+      def valid?
+        if @scheme == 'iso6523-actorid-upis'
+          #str =~ /[0-9]{4}:{1,35}+/
+          return true
+        end
+
+        false
+      end
     end
 
   end

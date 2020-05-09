@@ -8,12 +8,13 @@ module CertPub
 
     class PublisherV1Encryption
 
-      def self.perform(address, participant)
-        instance = self::new address, participant
+      def self.perform(context, address, participant)
+        instance = self::new context, address, participant
         instance.listing
       end
 
-      def initialize(address, participant)
+      def initialize(context, address, participant)
+        @context = context
         @client = CertPub::Util::RestClient address
         @participant = participant
       end
