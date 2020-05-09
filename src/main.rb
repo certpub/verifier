@@ -1,120 +1,74 @@
-require 'cgi'
 require 'config'
-require 'json'
-require 'nokogiri'
-require 'patron'
 require 'rainbow'
 require 'slop'
+
+Dir[File.join(__dir__, 'lib', '*.rb')].sort.each { |file| require file }
 
 opts = Slop.parse do |o|
   o.string '-m', '--mode', 'mode', default: 'production'
   o.string '-p', '--participant', 'participant identifier', default: '0192:984851006'
   o.string '--scheme', 'participant scheme', default: 'iso6523-actorid-upis'
   o.string '--locator', 'locator address'
+  o.string '--locator-spec', 'locator specification', default: 'certpub-v1'
   o.string '--publisher', 'publisher address'
+  o.string '--publisher-spec', 'publisher specification'
+  o.bool '-h', '--help', 'Display help'
 end
 
-Config.load_and_set_settings(Config.setting_files("#{__dir__}/config", opts[:mode]))
+if opts[:help]
+  puts opts
+  exit
+end
+
+Config.load_and_set_settings(Config.setting_files(File.join(__dir__, 'config'), opts[:mode]))
 
 
-participant = "#{opts[:scheme]}::#{opts[:participant]}"
+# PARTICIPANT
+participant = CertPub::Model::Participant::new opts[:participant], opts[:scheme]
 
-puts Rainbow('Participant').blue
-puts "Identifier: #{opts[:participant]}"
-puts "Scheme: #{opts[:scheme]}"
+puts Rainbow('Participant').blue.bright
+puts "Identifier: #{participant.value}"
+puts "Scheme: #{participant.scheme}"
 puts "Full: #{participant}"
 puts
 
 
-locator = Patron::Session.new
-locator.timeout = 10
-locator.base_url = opts[:locator] != nil ? opts[:locator] : Settings.locator.url
-locator.headers['User-Agent'] = 'CertPub/Verify'
+# LOCATOR
 
-lookup_path = "lookup/v2/#{CGI.escape participant}"
+locator_response = nil
 
-puts Rainbow('Locator').blue
-if opts['publisher'] != nil
-  puts Rainbow('Skipped...').green
-  puts
-
-  publisher_url = opts['publisher']
-else
-  puts "Address: #{locator.base_url}"
-  puts "Path: #{lookup_path}"
-
-  resp = locator.get(lookup_path)
-
-  if resp.status == 200
-    locator_response = JSON.parse(resp.body)
-
-    puts "Status: #{Rainbow(resp.status).green}"
-    puts "Response:"
-    locator_response.each do |k,v|
-      puts "  #{Rainbow(k).green}: #{v}"
-    end
+if opts[:publisher] == nil
+  # Find locator address
+  locator_address = opts[:locator] != nil ? opts[:locator] : Settings.locator.url
+  # Find specification metadata
+  spec = Settings.spec.locator.filter { |spec| spec.id == opts[:locator_spec] }.first
+  
+  if spec
+    # Perform discovery
+    puts Rainbow("Locator: #{spec.name}").blue.bright
+    locator_response = CertPub::Util::impl(spec.impl).send('perform', locator_address, participant)
     puts
-
-    publisher_url = locator_response['difi-bcp-v1']
   else
-    puts "Status: #{Rainbow(resp.status).red}"
-    puts "Response: #{Rainbow(resp.body).red}"
-    puts
-    puts Rainbow('Fail: Participant not found in locator.').red
+    # Implementation of specified specification was not found
+    puts Rainbow("Implementation for locator specification with id '#{opts[:locator_spec]}' is unknown").red
+    exit 1
+  end
+
+  if locator_response == nil
+    # No response from locator
     exit 1
   end
 end
 
-publisher = Patron::Session.new
-publisher.timeout = 10
-publisher.base_url = publisher_url
-publisher.headers['User-Agent'] = 'CertPub/Verify'
 
-path = "api/v1/#{CGI.escape participant}"
+# PUBLISHER
 
-puts Rainbow('Publisher, encryption').blue
-puts "Address: #{publisher.base_url}"
-puts "Path: #{path}"
-
-resp = publisher.get(path)
-
-if resp.status == 200
-  puts "Status: #{Rainbow(resp.status).green}"
-  puts "Response:"
-
-  xml = Nokogiri::XML(resp.body)
-  xml.css("Participant ProcessReference").each do |e|
-    puts "  #{e.xpath('@scheme')}::#{e.text} @ #{e.xpath('@role')}"
+if locator_response
+  locator_response.each do |key, address|
+    Settings.spec.publisher.filter { |spec| spec.key == key }.each do |spec|
+      puts Rainbow("Publisher: #{spec.name}").blue.bright
+      CertPub::Util::impl(spec.impl).send('perform', address, participant)
+      puts
+    end
   end
-
-  puts
-else
-  puts "Status: #{Rainbow(resp.status).red}"
-  puts "Response: #{Rainbow(resp.body).red}"
-  puts
-end
-
-
-path = "api/v1/sig/#{CGI.escape participant}"
-
-puts Rainbow('Publisher, signing').blue
-puts "Address: #{publisher.base_url}"
-puts "Path: #{path}"
-
-resp = publisher.get(path)
-
-if resp.status == 200
-  puts "Status: #{Rainbow(resp.status).green}"
-  puts "Response:"
-
-  xml = Nokogiri::XML(resp.body)
-  xml.css("Participant ProcessReference").each do |e|
-    puts "  #{e.xpath('@qualifier')}::#{e.text} @ #{e.xpath('@role')}"
-  end
-
-  puts
-else
-  puts "Status: #{Rainbow(resp.status).red}"
-  puts "Response: #{Rainbow(resp.body).red}"
-  puts
 end

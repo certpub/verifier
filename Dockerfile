@@ -8,4 +8,5 @@ RUN bundle
 
 USER 1000
 
+CMD ["--help"]
 ENTRYPOINT ["ruby", "/work/src/main.rb"]
