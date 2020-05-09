@@ -1,2 +1,7 @@
 locator:
   url: https://bcl.difi.blufo.net/
+
+issuers:
+  certificate:
+    - https://certpub.com/provider/buypass/production.crt
+    - https://certpub.com/provider/commfides/production.crt

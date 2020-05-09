@@ -20,7 +20,7 @@ module CertPub
         if resp.status == 200
           response = JSON.parse(resp.body)
 
-          puts "Status: #{Rainbow(resp.status).green.bright}"
+          puts "Status: #{Rainbow(resp.status).green}"
           puts "Response:"
           response.each do |k,v|
             if Settings.spec.publisher.filter { |spec| spec.key = k } 

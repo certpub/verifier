@@ -9,8 +9,8 @@ module CertPub
       attr_accessor :value, :scheme
 
       def initialize(value, scheme)
-        @value = value
-        @scheme = scheme
+        @value = value.to_s.strip
+        @scheme = scheme.to_s.strip
       end
 
       def to_s
@@ -19,6 +19,10 @@ module CertPub
 
       def escaped
         CGI.escape(to_s)
+      end
+
+      def ==(o)
+        o.class == self.class && o.to_s == to_s
       end
 
     end
