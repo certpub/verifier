@@ -26,9 +26,9 @@ module CertPub
         
         resp = @client.get(path)
         
+        puts "Status: #{Rainbow(resp.status).cyan} #{verify(resp.status == 200)}"
+
         if resp.status == 200
-          puts "Status: #{Rainbow(resp.status).green}"
-        
           xml = Nokogiri::XML(resp.body)
           puts "Process references: #{Rainbow(xml.css("Participant ProcessReference").count).cyan}"
           puts
@@ -41,7 +41,6 @@ module CertPub
             puts
           end
         else
-          puts "Status: #{Rainbow(resp.status).red.bright}"
           puts "Response: #{Rainbow(resp.body).red}"
         end
       end
@@ -55,18 +54,18 @@ module CertPub
 
         resp = @client.get(path)
         
+        puts "  Status: #{Rainbow(resp.status).cyan} #{verify(resp.status == 200)}"
+
         if resp.status == 200
-          puts "  Status: #{Rainbow(resp.status).green}"
-        
           xml = Nokogiri::XML(resp.body)
 
           xml_participant = xml.css('Process ParticipantIdentifier')
           res_participant = CertPub::Model::Participant::new xml_participant.text(), xml_participant.xpath('@scheme')
-          puts "  Participant: #{Rainbow(res_participant).color(@participant == res_participant ? :green : :red)}"
+          puts "  Participant: #{Rainbow(res_participant).cyan} #{verify(@participant == res_participant)}"
 
           xml_process = xml.css('Process ProcessIdentifier')
           res_process = CertPub::Model::Process::new xml_process.text, xml_process.xpath('@scheme')
-          puts "  Process: #{Rainbow(res_process).color(process == res_process ? :green : :red)}"
+          puts "  Process: #{Rainbow(res_process).cyan} #{verify(process == res_process)}"
 
           puts "  Certificate:"
           xml.css('Certificate').each do |cert|
@@ -74,13 +73,16 @@ module CertPub
 
             puts "  - Subject: #{Rainbow(certificate.subject).cyan}"
             puts "    Issuer: #{Rainbow(certificate.issuer).cyan}"
-            puts "    Serialnumber: #{Rainbow(certificate.serial).color(cert.xpath('@serialNumber').to_s == certificate.serial.to_s ? :green : :red)}"
-            puts "    Expire: #{Rainbow(certificate.not_after).cyan}"
+            puts "    Serialnumber: #{Rainbow(certificate.serial).cyan} #{verify(cert.xpath('@serialNumber').to_s == certificate.serial.to_s)}"
+            puts "    Valid: #{Rainbow(certificate.not_before).cyan} => #{Rainbow(certificate.not_after).cyan}"
           end
         else
-          puts "  Status: #{Rainbow(resp.status).red.bright}"
           puts "  Response: #{Rainbow(resp.body).red}"
         end
+      end
+
+      def verify(result)
+        result ? Rainbow('[OK]').green : Rainbow('[ERR]').red
       end
 
     end

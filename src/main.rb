@@ -6,7 +6,7 @@ Dir[File.join(__dir__, 'lib', '*.rb')].sort.each { |file| require file }
 
 opts = Slop.parse do |o|
   o.string '-m', '--mode', 'mode', default: 'production'
-  o.string '-p', '--participant', 'participant identifier', default: '0192:984851006'
+  o.string '-p', '--participant', 'participant identifier'
   o.string '--scheme', 'participant scheme', default: 'iso6523-actorid-upis'
   o.string '--locator', 'locator address'
   o.string '--locator-spec', 'locator specification', default: 'certpub-v1'
@@ -24,6 +24,11 @@ Config.load_and_set_settings(Config.setting_files(File.join(__dir__, 'config'), 
 
 
 # PARTICIPANT
+if opts[:participant] == nil
+  puts Rainbow("Participant identifier is not provided").red
+  exit 1
+end
+
 participant = CertPub::Model::Participant::new opts[:participant], opts[:scheme]
 
 puts Rainbow('Participant').blue.bright

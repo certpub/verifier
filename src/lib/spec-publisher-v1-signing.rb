@@ -1,3 +1,4 @@
+require 'date'
 require 'nokogiri'
 
 module CertPub
@@ -24,10 +25,18 @@ module CertPub
 
         resp = @client.get(path)
 
-        if resp.status == 200
-          puts "Status: #{Rainbow(resp.status).green}"
+        puts "Status: #{Rainbow(resp.status).cyan} #{verify(resp.status == 200)}"
 
+        if resp.status == 200
           xml = Nokogiri::XML(resp.body)
+
+          xml_participant = xml.css('Participant ParticipantIdentifier')
+          res_participant = CertPub::Model::Participant::new xml_participant.text(), xml_participant.xpath('@qualifier')
+          puts "Participant: #{Rainbow(res_participant).cyan} #{verify(@participant == res_participant)}"
+
+          xml_timestamp = xml.css('Participant Timestamp').text
+          puts "Timestamp: #{Rainbow(xml_timestamp).cyan}"
+
           puts "Process references: #{Rainbow(xml.css("Participant ProcessReference").count).cyan}"
           puts
 
@@ -39,7 +48,6 @@ module CertPub
             puts
           end
         else
-          puts "Status: #{Rainbow(resp.status).red}"
           puts "Response: #{Rainbow(resp.body).red}"
         end
       end
@@ -52,22 +60,25 @@ module CertPub
         puts "  Path: #{path}"
 
         resp = @client.get(path)
+
+        puts "  Status: #{Rainbow(resp.status).cyan} #{verify(resp.status == 200)}"
         
         if resp.status == 200
-          puts "  Status: #{Rainbow(resp.status).green}"
-        
           xml = Nokogiri::XML(resp.body)
 
           xml_participant = xml.css('Process ParticipantIdentifier')
           res_participant = CertPub::Model::Participant::new xml_participant.text(), xml_participant.xpath('@qualifier')
-          puts "  Participant: #{Rainbow(res_participant).color(@participant == res_participant ? :green : :red)}"
+          puts "  Participant: #{Rainbow(res_participant).cyan} #{verify(@participant == res_participant)}"
 
           xml_process = xml.css('Process ProcessIdentifier')
           res_process = CertPub::Model::Process::new xml_process.text, xml_process.xpath('@qualifier')
-          puts "  Process: #{Rainbow(res_process).color(process == res_process ? :green : :red)}"
+          puts "  Process: #{Rainbow(res_process).cyan} #{verify(process == res_process)}"
 
-          # TODO: Date
-          # TODO: Role
+          res_role = xml.css('Process Role').text.to_s
+          puts "  Role: #{Rainbow(res_role).cyan} #{verify(res_role == role.to_s)}"
+
+          res_date = xml.css('Process Date').text
+          puts "  Date: #{Rainbow(res_date).cyan} #{verify(Date.parse(res_date) == Time.now.utc.to_date)}"
 
           puts "  Certificate:"
           xml.css('Certificate').each do |cert|
@@ -75,13 +86,32 @@ module CertPub
 
             puts "  - Subject: #{Rainbow(certificate.subject).cyan}"
             puts "    Issuer: #{Rainbow(certificate.issuer).cyan}"
-            puts "    Serialnumber: #{Rainbow(certificate.serial).color(cert.xpath('@serialNumber').to_s == certificate.serial.to_s ? :green : :red)}"
-            puts "    Expire: #{Rainbow(certificate.not_after).cyan}"
+            puts "    Serialnumber: #{Rainbow(certificate.serial).cyan} #{verify(cert.xpath('@serialNumber').to_s == certificate.serial.to_s)}"
+            puts "    Valid: #{Rainbow(certificate.not_before).cyan} => #{Rainbow(certificate.not_after).cyan}"
+            puts "    Interval:"
+
+            cert.css('Interval').each do |interval|
+              from = interval.xpath('@from').to_s
+              time_from = DateTime.parse(from)
+
+              if !interval.xpath('@to').empty?
+                to = interval.xpath('@to')
+                pp to
+                time_to = DateTime.parse(to.to_s)
+
+                puts "      #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => #{Rainbow(to).cyan} #{verify(time_to <= certificate.not_after)}"
+              else
+                puts "      #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => Future"
+              end
+            end
           end
         else
-          puts "  Status: #{Rainbow(resp.status).red.bright}"
           puts "  Response: #{Rainbow(resp.body).red}"
         end
+      end
+
+      def verify(result)
+        result ? Rainbow('[OK]').green : Rainbow('[ERR]').red
       end
 
     end

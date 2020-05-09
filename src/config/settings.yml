@@ -11,7 +11,7 @@ spec:
       impl: CertPub::Spec::PublisherV1Encryption
 
     - id: certpub-signing-v1
-      name: CertPub Publisher v1, encryption
+      name: CertPub Publisher v1, signing
       key: difi-bcp-v1
       impl: CertPub::Spec::PublisherV1Signing
   

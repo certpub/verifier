@@ -17,10 +17,11 @@ module CertPub
         # Fetch from locator
         resp = client.get(path)
 
+        puts "Status: #{Rainbow(resp.status).cyan} #{verify(resp.status == 200)}"
+
         if resp.status == 200
           response = JSON.parse(resp.body)
 
-          puts "Status: #{Rainbow(resp.status).green}"
           puts "Response:"
           response.each do |k,v|
             if Settings.spec.publisher.filter { |spec| spec.key = k } 
@@ -32,12 +33,14 @@ module CertPub
 
           return response
         else
-          puts "Status: #{Rainbow(resp.status).red.bright}"
           puts "Response: #{Rainbow(resp.body).red}"
 
           return nil
         end
+      end
 
+      def self.verify(result)
+        result ? Rainbow('[OK]').green : Rainbow('[ERR]').red
       end
 
     end
