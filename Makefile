@@ -1,5 +1,5 @@
 build:
-	@docker build -t certpub/verifier .
+	@docker build -t certpub/verifier:dev .
 
 shell:
 	@docker run --rm -it \
