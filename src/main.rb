@@ -52,14 +52,24 @@ puts "Full: #{participant} #{participant.valid? ? Rainbow("[OK]").green : Rainbo
 puts
 
 
-# TODO: CERTIFICATES
-
-
 # CONTEXT
 
 context = CertPub::Model::Context::new
 context.opts = opts
 context.home_folder = __dir__
+context.issuers = CertPub::Service::Issuers::new context
+
+
+# ISSUERS
+
+client = CertPub::Util::RestClient context
+
+Settings.issuers.certificate.each do |url|
+  context.issuers.add_cert client.get(url).body
+end
+
+
+# TODO: MORIBUS
 
 
 # LOCATOR

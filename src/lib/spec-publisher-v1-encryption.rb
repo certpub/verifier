@@ -85,9 +85,9 @@ module CertPub
 
           puts "  Certificate:"
           xml.css('Certificate').each do |cert|
-            certificate = OpenSSL::X509::Certificate.new Base64.decode64(cert.text)
+            certificate = OpenSSL::X509::Certificate::new Base64.decode64(cert.text)
 
-            puts "  - Subject: #{Rainbow(certificate.subject).cyan}"
+            puts "  - Subject: #{Rainbow(certificate.subject).cyan} #{verify(@context.issuers.verify certificate)}"
             puts "    Issuer: #{Rainbow(certificate.issuer).cyan}"
             puts "    Serialnumber: #{Rainbow(certificate.serial).cyan} #{verify(cert.xpath('@serialNumber').to_s == certificate.serial.to_s)}"
             puts "    Valid: #{Rainbow(certificate.not_before).cyan} => #{Rainbow(certificate.not_after).cyan}"

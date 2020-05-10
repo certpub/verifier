@@ -3,6 +3,8 @@ locator:
 
 issuers:
   certificate:
+    - https://certpub.com/provider/buypass/test-root.crt
     - https://certpub.com/provider/buypass/test.crt
+    - https://certpub.com/provider/commfides/test-root.crt
     - https://certpub.com/provider/commfides/test.crt
     - https://certpub.com/provider/commfides/test2.crt
