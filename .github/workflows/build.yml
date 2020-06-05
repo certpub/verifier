@@ -27,3 +27,16 @@ jobs:
         docker login -u $DOCKER_USERNAME -p $DOCKER_TOKEN
         docker tag certpub/verifier:dev certpub/verifier:edge
         docker push certpub/verifier:edge
+
+    - name: Push to Docker (release)
+      if: "startsWith(github.ref, 'refs/tags/')"
+      env:
+        DOCKER_USERNAME: klakegg
+        DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      run: |
+        VERSION=$(echo $GITHUB_REF | sed "s:.*/::g")
+        docker login -u $DOCKER_USERNAME -p $DOCKER_TOKEN
+        docker tag certpub/verifier:dev certpub/verifier:$VERSION
+        docker tag certpub/verifier:dev certpub/verifier:latest
+        docker push certpub/verifier:$VERSION
+        docker push certpub/verifier:latest
