@@ -17,3 +17,13 @@ jobs:
 
     - name: Verify
       run: make verify
+    
+    - name: Push to Docker (edge)
+      if: "!startsWith(github.ref, 'refs/tags/')"
+      env:
+        DOCKER_USERNAME: klakegg
+        DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      run: |
+        docker login -u $DOCKER_USERNAME -p $DOCKER_TOKEN
+        docker tag certpub/verifier:dev certpub/verifier:edge
+        docker push certpub/verifier:edge
