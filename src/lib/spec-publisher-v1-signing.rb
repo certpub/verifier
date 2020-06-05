@@ -120,7 +120,7 @@ module CertPub
                 pp to
                 time_to = DateTime.parse(to.to_s)
 
-                puts "    - #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => #{Rainbow(to).cyan} #{verify(time_to <= certificate.not_after)}"
+                puts "    - #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => #{Rainbow(to).cyan} #{verify(time_to <= DateTime.parse(certificate.not_after.to_s))}"
               else
                 puts "    - #{Rainbow(from).cyan} #{verify(time_from => certificate.not_before)} => Future"
               end
